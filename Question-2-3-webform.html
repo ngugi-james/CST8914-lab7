@@ -25,15 +25,6 @@
           fieldset ul {
             margin: 0;
           }
-
-          .offscreen {
-            position: absolute;
-            left: -10000px;
-            top: auto;
-            width: 1px;
-            height: 1px;
-            overflow: hidden;
-          }
         </style>
     </head>
     <body>
@@ -51,7 +42,7 @@
                 <span id="bioHelp" class="offscreen">Include examples on your skills in JavaScript.</span>
             </div>
         
-            <!-- Improved Gender Selection with validation -->
+            <!-- Grouping radio buttons for gender selection -->
             <fieldset class="control" aria-required="true">
                 <legend>Gender <span class="required">*</span></legend>
                 <div>
@@ -62,7 +53,7 @@
                     <input id="gender_female" name="gender" type="radio" value="female" />
                     <label for="gender_female">Female</label>
                 </div>
-                <span id="genderHelp" class="offscreen">Please select a gender. This field is required.</span>
+                <span id="genderHelp" class="offscreen">This field is required.</span>
             </fieldset>
         
             <div class="control">
@@ -83,48 +74,77 @@
             "use strict";
             (function () {
                 var validateInput;
+                $.urlParam = function (name) {
+                    var results = new RegExp('[?&]' + name + '=([^&#]*)').exec(window.location.href);
+                    return results === null ? null : decodeURI(results[1]) || null;
+                };
 
-                // Function to validate gender selection
-                function validateGender() {
-                    var isGenderSelected = $('input[name="gender"]:checked').length > 0;
-                    var $errorContainer = $('fieldset.errors ul');
-                    var $genderFieldset = $('fieldset[aria-required="true"]');
+                validateInput = function validateInput(input, message) {
+                    var $elementToDescribe, $error, $errorContainer, $input, $referencedElement, value;
+                    $input = $('[name="' + input + '"]');
+                    if ($input.is(':radio')) {
+                        // Check if any radio button in the group is selected
+                        if (!$input.is(':checked')) {
+                            value = null;
+                        }
+                    } else {
+                        value = $.urlParam(input);
+                    }
 
-                    // If no gender is selected, show an error
-                    if (!isGenderSelected) {
+                    if (value === null) {
                         if ($('fieldset.errors').length === 0) {
                             $('form').prepend('<fieldset class="errors"><legend>Errors</legend><ul></ul></fieldset>');
                         }
 
-                        // Create a new error message for the gender field
-                        var $error = $('<li><a href="#">Please select your gender.</a></li>');
-                        $error.click(function (e) {
-                            $('#gender_male').focus();
-                            e.preventDefault();
-                        });
+                        $referencedElement = null;
+                        $elementToDescribe = null;
+                        $errorContainer = $('fieldset.errors ul');
 
-                        // Append the error to the list if it doesn't already exist
-                        if ($errorContainer.find('li:contains("Please select your gender.")').length === 0) {
-                            $errorContainer.append($error);
+                        if ($input.is(':radio')) {
+                            var $fieldset = $input.closest('fieldset');
+                            $elementToDescribe = $fieldset;
+                            $referencedElement = $input.filter(':first');
+                        } else {
+                            $elementToDescribe = $input;
+                            $referencedElement = $input;
                         }
 
-                        // Set aria-describedby for the gender fieldset
-                        $genderFieldset.attr('aria-describedby', 'genderHelp');
+                        // R.G. hint: fix next line ;)
+                        $error = $('<a href="#">' + message + '</a>');
+                        $error.click(function (e) {
+                            // If we rely on the link's href pointing to the input's ID, it doesn't trigger forms mode in screen readers
+                            $referencedElement.focus();
+                            return e.preventDefault();
+                        });
+                        $elementToDescribe.attr('aria-describedby', input + '_description');
+                        $errorContainer.append('<li>').find('li:last').append($error);
                     } else {
-                        // If a gender is selected, remove any existing error message
-                        $errorContainer.find('li:contains("Please select your gender.")').remove();
-                        $genderFieldset.removeAttr('aria-describedby');
+                        if ($input.is(':checkbox')) {
+                            $input.attr('checked', true);
+                        }
+                        if ($input.is(':radio')) {
+                            return $input.filter('[value="' + value + '"]').attr('checked', true);
+                        } else {
+                            return $input.val(value);
+                        }
                     }
-
-                    return isGenderSelected;
-                }
+                };
 
                 $(document).ready(function () {
+                    if ($.urlParam('validate')) {
+                        validateInput('name', 'Please enter your name!');
+                        validateInput('biography', 'Please tell us something about your history!');
+                        validateInput('gender', 'Please select your gender!');
+                        validateInput('accept_agbs', 'You must accept our terms and conditions!');
+                        if ($('.error').length === 0) {
+                            return alert('All inputs are valid.');
+                        }
+                    }
+
                     $('#feedback-form').on('submit', function (e) {
-                        var isGenderValid = validateGender();
-                        
-                        // Prevent form submission if the gender is not selected
-                        if (!isGenderValid) {
+                        var isGenderSelected = $('input[name="gender"]:checked').length > 0;
+                        if (!isGenderSelected) {
+                            validateInput('gender', 'Please select your gender!');
                             e.preventDefault();
                         }
                     });
