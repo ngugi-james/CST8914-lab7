@@ -29,7 +29,7 @@
     </head>
     <body>
         <h1>Feedback form</h1>
-        <form>
+        <form id="feedback-form">
             <div class="control">
                 <label for="name">Full name <span class="required">*</span></label>
                 <input id="name" name="name" type="text" aria-required="true" aria-describedby="nameHelp" />
@@ -82,24 +82,37 @@
                 validateInput = function validateInput(input, message) {
                     var $elementToDescribe, $error, $errorContainer, $input, $referencedElement, value;
                     $input = $('[name="' + input + '"]');
-                    if ((value = $.urlParam(input)) === null) {
+                    if ($input.is(':radio')) {
+                        // Check if any radio button in the group is selected
+                        if (!$input.is(':checked')) {
+                            value = null;
+                        }
+                    } else {
+                        value = $.urlParam(input);
+                    }
+
+                    if (value === null) {
                         if ($('fieldset.errors').length === 0) {
                             $('form').prepend('<fieldset class="errors"><legend>Errors</legend><ul></ul></fieldset>');
                         }
+
                         $referencedElement = null;
                         $elementToDescribe = null;
                         $errorContainer = $('fieldset.errors ul');
+
                         if ($input.is(':radio')) {
-                            $fieldset = $input.closest('fieldset');
+                            var $fieldset = $input.closest('fieldset');
                             $elementToDescribe = $fieldset;
                             $referencedElement = $input.filter(':first');
                         } else {
                             $elementToDescribe = $input;
                             $referencedElement = $input;
                         }
+
                         // R.G. hint: fix next line ;)
                         $error = $('<a href="#">' + message + '</a>');
                         $error.click(function (e) {
+                            // If we rely on the link's href pointing to the input's ID, it doesn't trigger forms mode in screen readers
                             $referencedElement.focus();
                             return e.preventDefault();
                         });
@@ -121,12 +134,20 @@
                     if ($.urlParam('validate')) {
                         validateInput('name', 'Please enter your name!');
                         validateInput('biography', 'Please tell us something about your history!');
-                        validateInput('gender', 'Please tell us your gender!');
+                        validateInput('gender', 'Please select your gender!');
                         validateInput('accept_agbs', 'You must accept our terms and conditions!');
                         if ($('.error').length === 0) {
                             return alert('All inputs are valid.');
                         }
                     }
+
+                    $('#feedback-form').on('submit', function (e) {
+                        var isGenderSelected = $('input[name="gender"]:checked').length > 0;
+                        if (!isGenderSelected) {
+                            validateInput('gender', 'Please select your gender!');
+                            e.preventDefault();
+                        }
+                    });
                 });
             }).call(void 0);
         </script>
