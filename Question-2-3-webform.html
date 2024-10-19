@@ -25,6 +25,15 @@
           fieldset ul {
             margin: 0;
           }
+
+          .offscreen {
+            position: absolute;
+            left: -10000px;
+            top: auto;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+          }
         </style>
     </head>
     <body>
@@ -74,6 +83,7 @@
             "use strict";
             (function () {
                 var validateInput;
+
                 $.urlParam = function (name) {
                     var results = new RegExp('[?&]' + name + '=([^&#]*)').exec(window.location.href);
                     return results === null ? null : decodeURI(results[1]) || null;
@@ -82,11 +92,10 @@
                 validateInput = function validateInput(input, message) {
                     var $elementToDescribe, $error, $errorContainer, $input, $referencedElement, value;
                     $input = $('[name="' + input + '"]');
+
                     if ($input.is(':radio')) {
-                        // Check if any radio button in the group is selected
-                        if (!$input.is(':checked')) {
-                            value = null;
-                        }
+                        // Correctly check if any radio button in the group is selected
+                        value = $input.filter(':checked').val() || null;
                     } else {
                         value = $.urlParam(input);
                     }
@@ -112,18 +121,19 @@
                         // R.G. hint: fix next line ;)
                         $error = $('<a href="#">' + message + '</a>');
                         $error.click(function (e) {
-                            // If we rely on the link's href pointing to the input's ID, it doesn't trigger forms mode in screen readers
                             $referencedElement.focus();
                             return e.preventDefault();
                         });
                         $elementToDescribe.attr('aria-describedby', input + '_description');
                         $errorContainer.append('<li>').find('li:last').append($error);
                     } else {
+                        // Remove any existing error message if the input is valid
+                        $('fieldset.errors ul li:contains("' + message + '")').remove();
                         if ($input.is(':checkbox')) {
-                            $input.attr('checked', true);
+                            $input.prop('checked', true);
                         }
                         if ($input.is(':radio')) {
-                            return $input.filter('[value="' + value + '"]').attr('checked', true);
+                            return $input.filter('[value="' + value + '"]').prop('checked', true);
                         } else {
                             return $input.val(value);
                         }
