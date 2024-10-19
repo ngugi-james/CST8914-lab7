@@ -1,162 +1,133 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <title>Form validation with messages on top: Code example - Accessibility Developer Guide example</title>
-        <meta charset="utf-8">
-        <style>
-          .control, fieldset {
+<head>
+    <title>Form validation with messages on top: Code example - Accessibility Developer Guide example</title>
+    <meta charset="utf-8">
+    <style>
+        .control, fieldset {
             margin: 6px 0;
-          }
-          
-          label {
+        }
+        label {
             display: inline-block;
             width: 120px;
             vertical-align: top;
-          }
-          
-          input + label {
+        }
+        input + label {
             width: auto;
-          }
-          
-          .error, .required {
+        }
+        .error, .required {
             color: red;
-          }
-          
-          fieldset ul {
+        }
+        fieldset ul {
             margin: 0;
-          }
-
-          .offscreen {
+        }
+        .offscreen {
             position: absolute;
             left: -10000px;
             top: auto;
             width: 1px;
             height: 1px;
             overflow: hidden;
-          }
-        </style>
-    </head>
-    <body>
-        <h1>Feedback form</h1>
-        <form id="feedback-form">
-            <div class="control">
-                <label for="name">Full name <span class="required">*</span></label>
-                <input id="name" name="name" type="text" aria-required="true" aria-describedby="nameHelp" />
-                <span id="nameHelp" class="offscreen">This field is required.</span>
-            </div>
+        }
+    </style>
+</head>
+<body>
+    <h1>Feedback form</h1>
+    <form id="feedback-form">
+        <div class="control">
+            <label for="name">Full name <span class="required">*</span></label>
+            <input id="name" name="name" type="text" aria-required="true" aria-describedby="nameHelp" />
+            <span id="nameHelp" class="offscreen">This field is required.</span>
+        </div>
 
-            <div class="control">
-                <label for="biography">Biography</label>
-                <textarea id="biography" name="biography" aria-describedby="bioHelp"></textarea>
-                <span id="bioHelp" class="offscreen">Include examples on your skills in JavaScript.</span>
+        <div class="control">
+            <label for="biography">Biography</label>
+            <textarea id="biography" name="biography" aria-describedby="bioHelp"></textarea>
+            <span id="bioHelp" class="offscreen">Include examples of your skills in JavaScript.</span>
+        </div>
+    
+        <!-- Grouping radio buttons for gender selection -->
+        <fieldset class="control" aria-required="true">
+            <legend>Gender <span class="required">*</span></legend>
+            <div>
+                <input id="gender_male" name="gender" type="radio" value="male" />
+                <label for="gender_male">Male</label>
             </div>
-        
-            <!-- Grouping radio buttons for gender selection -->
-            <fieldset class="control" aria-required="true">
-                <legend>Gender <span class="required">*</span></legend>
-                <div>
-                    <input id="gender_male" name="gender" type="radio" value="male" />
-                    <label for="gender_male">Male</label>
-                </div>
-                <div>
-                    <input id="gender_female" name="gender" type="radio" value="female" />
-                    <label for="gender_female">Female</label>
-                </div>
-                <span id="genderHelp" class="offscreen">This field is required.</span>
-            </fieldset>
-        
-            <div class="control">
-                <input id="accept_agbs" name="accept_agbs" type="checkbox" value="1" aria-required="true" aria-describedby="termsHelp" />
-                <label for="accept_agbs">I accept the terms and conditions</label>
-                <span id="termsHelp" class="offscreen">You must accept the terms and conditions to proceed.</span>
+            <div>
+                <input id="gender_female" name="gender" type="radio" value="female" />
+                <label for="gender_female">Female</label>
             </div>
-        
-            <div class="control">
-                <input name="validate" type="hidden" value="1" />
-                <input type="submit" value="Register" />
-            </div>
-        </form>
-      
-        <!-- JavaScript for form validation and accessibility enhancements -->
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-        <script>
-            "use strict";
-            (function () {
-                var validateInput;
+            <span id="genderHelp" class="offscreen">This field is required.</span>
+        </fieldset>
+    
+        <div class="control">
+            <input id="accept_agbs" name="accept_agbs" type="checkbox" value="1" aria-required="true" aria-describedby="termsHelp" />
+            <label for="accept_agbs">I accept the terms and conditions</label>
+            <span id="termsHelp" class="offscreen">You must accept the terms and conditions to proceed.</span>
+        </div>
+    
+        <div class="control">
+            <input name="validate" type="hidden" value="1" />
+            <input type="submit" value="Register" />
+        </div>
+    </form>
 
-                $.urlParam = function (name) {
-                    var results = new RegExp('[?&]' + name + '=([^&#]*)').exec(window.location.href);
-                    return results === null ? null : decodeURI(results[1]) || null;
-                };
+    <!-- JavaScript for form validation and accessibility enhancements -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <script>
+        "use strict";
+        (function () {
+            var validateInput;
 
-                validateInput = function validateInput(input, message) {
-                    var $elementToDescribe, $error, $errorContainer, $input, $referencedElement, value;
-                    $input = $('[name="' + input + '"]');
-
-                    if ($input.is(':radio')) {
-                        // Correctly check if any radio button in the group is selected
-                        value = $input.filter(':checked').val() || null;
-                    } else {
-                        value = $.urlParam(input);
+            validateInput = function validateInput(input, message) {
+                var $input = $('[name="' + input + '"]');
+                var isValid = $input.is(':radio') ? $input.filter(':checked').val() !== undefined : $input.val().trim() !== '';
+                
+                if (!isValid) {
+                    if ($('fieldset.errors').length === 0) {
+                        $('form').prepend('<fieldset class="errors"><legend>Errors</legend><ul></ul></fieldset>');
                     }
 
-                    if (value === null) {
-                        if ($('fieldset.errors').length === 0) {
-                            $('form').prepend('<fieldset class="errors"><legend>Errors</legend><ul></ul></fieldset>');
-                        }
+                    var $errorContainer = $('fieldset.errors ul');
+                    var $referencedElement = $input.is(':radio') ? $input.first() : $input;
 
-                        $referencedElement = null;
-                        $elementToDescribe = null;
-                        $errorContainer = $('fieldset.errors ul');
-
-                        if ($input.is(':radio')) {
-                            var $fieldset = $input.closest('fieldset');
-                            $elementToDescribe = $fieldset;
-                            $referencedElement = $input.filter(':first');
-                        } else {
-                            $elementToDescribe = $input;
-                            $referencedElement = $input;
-                        }
-
-                        // R.G. hint: fix next line ;)
-                        $error = $('<a href="#">' + message + '</a>');
-                        $error.click(function (e) {
-                            $referencedElement.focus();
-                            return e.preventDefault();
-                        });
-                        $elementToDescribe.attr('aria-describedby', input + '_description');
-                        $errorContainer.append('<li>').find('li:last').append($error);
-                    } else {
-                        // Remove any existing error message if the input is valid
-                        $('fieldset.errors ul li:contains("' + message + '")').remove();
-                        if ($input.is(':checkbox')) {
-                            $input.prop('checked', true);
-                        }
-                        if ($input.is(':radio')) {
-                            return $input.filter('[value="' + value + '"]').prop('checked', true);
-                        } else {
-                            return $input.val(value);
-                        }
-                    }
-                };
-
-                $(document).ready(function () {
-                    if ($.urlParam('validate')) {
-                        validateInput('name', 'Please enter your name!');
-                        validateInput('biography', 'Please tell us something about your history!');
-                        validateInput('gender', 'Please select your gender!');
-                        validateInput('accept_agbs', 'Please accept our terms and conditions!');
-                    }
-
-                    $('#feedback-form').on('submit', function (e) {
-                        var isGenderSelected = $('input[name="gender"]:checked').length > 0;
-                        if (!isGenderSelected) {
-                            validateInput('gender', 'Please select your gender!');
-                            e.preventDefault();
-                        }
+                    // Add error message with link to focus on the invalid field
+                    var $error = $('<li><a href="#">' + message + '</a></li>');
+                    $error.find('a').click(function (e) {
+                        e.preventDefault();
+                        $referencedElement.focus();
                     });
+                    $errorContainer.append($error);
+
+                    // Focus on the errors area if validation fails
+                    $('.errors').focus();
+                } else {
+                    $('fieldset.errors ul li:contains("' + message + '")').remove();
+                }
+            };
+
+            $(document).ready(function () {
+                $('#feedback-form').on('submit', function (e) {
+                    e.preventDefault();
+                    var valid = true;
+                    
+                    validateInput('name', 'Please enter your name!');
+                    validateInput('biography', 'Please tell us something about your history!');
+                    validateInput('gender', 'Please select your gender!');
+                    validateInput('accept_agbs', 'Please accept our terms and conditions!');
+
+                    // Check if errors exist
+                    if ($('fieldset.errors ul li').length > 0) {
+                        valid = false;
+                    }
+
+                    if (valid) {
+                        alert("All inputs are valid");
+                        // Submit form logic here if needed
+                    }
                 });
-            }).call(void 0);
-        </script>
-    </body>
+            });
+        })();
+    </script>
+</body>
 </html>
