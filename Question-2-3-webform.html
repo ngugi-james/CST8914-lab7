@@ -25,6 +25,15 @@
           fieldset ul {
             margin: 0;
           }
+
+          .offscreen {
+            position: absolute;
+            left: -10000px;
+            top: auto;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+          }
         </style>
     </head>
     <body>
@@ -136,9 +145,6 @@
                         validateInput('biography', 'Please tell us something about your history!');
                         validateInput('gender', 'Please select your gender!');
                         validateInput('accept_agbs', 'You must accept our terms and conditions!');
-                        if ($('.error').length === 0) {
-                            return alert('All inputs are valid.');
-                        }
                     }
 
                     $('#feedback-form').on('submit', function (e) {
