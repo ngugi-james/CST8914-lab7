@@ -83,6 +83,10 @@
                 var $input = $('[name="' + input + '"]');
                 var isValid = $input.is(':radio') ? $input.filter(':checked').val() !== undefined : $input.val().trim() !== '';
                 
+                if ($input.is(':checkbox')) {
+                    isValid = $input.is(':checked');
+                }
+
                 if (!isValid) {
                     if ($('fieldset.errors').length === 0) {
                         $('form').prepend('<fieldset class="errors"><legend>Errors</legend><ul></ul></fieldset>');
@@ -123,7 +127,7 @@
 
                     if (valid) {
                         alert("All inputs are valid");
-                        // Submit form logic here if needed
+                        // Proceed with form submission here if needed
                     }
                 });
             });
